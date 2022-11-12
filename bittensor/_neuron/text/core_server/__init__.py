@@ -117,7 +117,7 @@ class neuron:
             self.model = queue.get()
             self.model.config = config
         else:
-            server(config = config)
+            self.model = server(config = config)
             
         self.config = config
         self.config.to_prometheus()
