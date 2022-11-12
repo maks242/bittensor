@@ -113,11 +113,11 @@ class neuron:
             port = config.prometheus.port if config.axon.port == bittensor.defaults.axon.port else config.axon.port - 1000
         )
 
-        if queue is not None:
-            self.model = queue.get()
-            self.model.config = config
-        else:
-            self.model = server(config = config)
+       # if queue is not None:
+        self.model = queue.get()
+        self.model.config = config
+        #else:
+         #   self.model = server(config = config)
             
         self.config = config
         self.config.to_prometheus()
