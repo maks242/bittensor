@@ -3,7 +3,7 @@ import torch.multiprocessing as mp
 
 
 def processfn(queue, config):
-    bittensor.neurons.core_server.neuron(queue=queue, config=config).run()
+    bittensor.neurons.core_server.neuron(queue=queue).run()
 
 if __name__ == "__main__":
     bittensor.utils.version_checking()
@@ -19,10 +19,7 @@ if __name__ == "__main__":
     for i in range(instances_count):
         queue.put(server_model)
 
-        config = server_model.config
-        config.update_with_kwargs({'wallet':'hw' + str(i + 1)})
-
-        instance = mp.Process(target=processfn, args=(queue, config))
+        instance = mp.Process(target=processfn, args=(queue))
         instances.append(instance)
         instance.start()
 
