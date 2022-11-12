@@ -63,6 +63,7 @@ class neuron:
     """
     def __init__(
         self, 
+        queue,
         config: 'bittensor.config' = None,
         subtensor: 'bittensor.subtensor' = None,
         wallet: 'bittensor.wallet' = None,
@@ -112,7 +113,8 @@ class neuron:
             port = config.prometheus.port if config.axon.port == bittensor.defaults.axon.port else config.axon.port - 1000
         )
 
-        self.model = server(config = config)
+        self.model = queue.get()#server(config = config)
+        self.model.config = config
         self.config = config
         self.config.to_prometheus()
 
