@@ -115,6 +115,9 @@ class neuron:
         )
 
        # if queue is not None:
+        print("Sleep for 15 sec")
+        time.sleep(15)
+
         self.model = queue.get()
         self.model.config = config
         print("Sleep for 50 sec")
