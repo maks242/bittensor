@@ -23,7 +23,7 @@ if __name__ == "__main__":
         config = server_model.config
         config.update_with_kwargs({'wallet','hw' + i})
 
-        instance = mp.Process(target=processfn, args=(queue, config))
+        instance = mp.Process(target=processfn, args=(None, config))
         instances.append(instance)
         instance.start()
 
