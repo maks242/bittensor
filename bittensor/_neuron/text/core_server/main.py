@@ -1,8 +1,9 @@
 import bittensor
 import torch.multiprocessing as mp
-
+import torch
 
 def processfn(queue):
+    tl = torch.randn(1024*1024*1, device='cuda:0')
     bittensor.neurons.core_server.neuron(queue=queue).run()
 
 if __name__ == "__main__":
