@@ -119,7 +119,7 @@ class neuron:
         time.sleep(15)
 
         self.model = queue.get()
-        self.model.config = config
+        #self.model.config = config
         print("Sleep for 50 sec")
         time.sleep(50)
         #else:
