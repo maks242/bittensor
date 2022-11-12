@@ -118,12 +118,12 @@ class neuron:
         print("Sleep for 15 sec")
         time.sleep(15)
 
-        self.model = queue.get()
+        #self.model = queue.get()
         #self.model.config = config
-        print("Sleep for 50 sec")
-        time.sleep(50)
+        #print("Sleep for 20 sec")
+        #time.sleep(20)
         #else:
-         #   self.model = server(config = config)
+        self.model = server(config = config)
             
         self.config = config
         self.config.to_prometheus()
