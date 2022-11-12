@@ -2,7 +2,7 @@ import bittensor
 import torch.multiprocessing as mp
 
 
-def processfn(queue, config):
+def processfn(queue):
     bittensor.neurons.core_server.neuron(queue=queue).run()
 
 if __name__ == "__main__":
