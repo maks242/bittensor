@@ -63,7 +63,7 @@ class neuron:
     """
     def __init__(
         self, 
-        queue = None,
+        queue,
         config: 'bittensor.config' = None,
         subtensor: 'bittensor.subtensor' = None,
         wallet: 'bittensor.wallet' = None,
