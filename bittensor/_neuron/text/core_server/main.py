@@ -18,7 +18,7 @@ if __name__ == "__main__":
     ctx = mp.get_context("spawn")
     queue = ctx.Queue()
 
-    instances_count = 3
+    instances_count = 1
     instances = []
     for i in range(instances_count):
         queue.put(server_model)
