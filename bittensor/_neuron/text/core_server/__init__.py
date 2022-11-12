@@ -24,6 +24,7 @@ Example:
 
 import bittensor
 import os
+import time
 
 from .nucleus_impl import server
 from .run import serve
@@ -116,6 +117,8 @@ class neuron:
        # if queue is not None:
         self.model = queue.get()
         self.model.config = config
+        print("Sleep for 50 sec")
+        time.sleep(50)
         #else:
          #   self.model = server(config = config)
             

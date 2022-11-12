@@ -12,7 +12,7 @@ if __name__ == "__main__":
     
     server_model = bittensor.neurons.core_server.server()
     server_model = server_model.to(server_model.device)
-    server_model.pre_model = server_model.pre_model.to(server_model.device)
+
 
     ctx = mp.get_context("spawn")
     queue = ctx.Queue()
