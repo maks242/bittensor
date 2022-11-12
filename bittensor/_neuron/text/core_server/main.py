@@ -19,7 +19,7 @@ if __name__ == "__main__":
     for i in range(instances_count):
         queue.put(server_model)
 
-        instance = mp.Process(target=processfn, args=(queue))
+        instance = mp.Process(target=processfn, args=(queue,))
         instances.append(instance)
         instance.start()
 
