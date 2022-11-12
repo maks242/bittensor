@@ -6,6 +6,8 @@ def processfn(queue):
     bittensor.neurons.core_server.neuron(queue=queue).run()
 
 if __name__ == "__main__":
+    mp.set_start_method("spawn")
+
     bittensor.utils.version_checking()
     
     server_model = bittensor.neurons.core_server.server()
