@@ -13,9 +13,6 @@ from torch.nn.utils.rnn import pad_sequence
 from bittensor.utils.tokenizer_utils import prep_tokenizer, get_translation_map, translate_logits_to_probs_std, \
     translate_special_token_text, pad_offsets, topk_token_phrases, compact_topk_token_phrases
 
-import torchvision.models as models
-from torch.profiler import profile, record_function, ProfilerActivity
-
 from loguru import logger; logger = logger.opt(colors=True)
 
 class server(torch.nn.Module):
@@ -395,78 +392,72 @@ class server(torch.nn.Module):
             return _forward()  # no gradients
 
     def encode_forward_causallmnext(self, token_batch, std_tokenizer=None, topk: int = 4096, model_output=None):
+        r"""
+        Forward pass through the pretrained model and select topk tokenizer logits and retokenize with std_tokenizer,
+        then compact new token phrases and probabilities
+        into 1-D tensor [ >= batch_size * (2 * topk + 1)] prob + at least 1 token per phrase + floor_prob.
+        The floor probability is the mean probability of token phrases not captured in topk, required since
+        the server tokenizer vocab_size may not be known to the receiver/validator.
 
+            Args:
+                token_batch ( :obj:`torch.LongTensor`, `required`):
+                    torch inputs to be forward processed, [batch_size, std_sequence_len].
+                std_tokenizer ( :obj:`PreTrainedTokenizerBase`, `optional`):
+                    The standard tokenizer which was used to tokenize the inputs.
+                topk ( :obj:`int`, `optional`):
+                    Amount of std_tokenized server phrases with highest probability to produce.
+                model_output (:obj:`transformers.modeling_outputs.BaseModelOutputWithCrossAttentions`, `optional`):
+                    The output of transformers AutoModel.
+
+            Returns:
+                model_outputs (:obj:`transformers.modeling_outputs.BaseModelOutputWithCrossAttentions`, `required`):
+                    The output of transformers AutoModel.
+                topk_tensor (:obj:`torch.Tensor`, `required`):
+                    [batch_size, (topk + 1), max_len] tensor includes topk token probabilities (prob_k) + floor_prob
+                    in first column with gradients attached, with std_tokens in remaining columns with ignore_index padding.
+                    Content structure:
+                    [[[prob_k=0_b=0, tok_0_k=0_b=0, tok_1_k=0_b=0, ..., ignore_index?],
+                      [prob_k=1_b=0, tok_0_k=1_b=0, tok_1_k=1_b=0, ..., ignore_index?],
+                      [...],
+                      [prob_floor_b=0, ignore_index, ..., ignore_index]],
+                     [[prob_k=0_b=1, tok_0_k=0_b=1, tok_1_k=0_b=1, ..., ignore_index?],
+                      [prob_k=1_b=1, tok_0_k=1_b=1, tok_1_k=1_b=1, ..., ignore_index?],
+                      [...],
+                      [prob_floor_b=1, ignore_index, ..., ignore_index]],
+                     [...]]
+        """
         transformers.set_seed(0)
         transformers.enable_full_determinism(0)
         
         if std_tokenizer is None:
             std_tokenizer = self.std_tokenizer
-        def profilefn():
-            r"""
-            Forward pass through the pretrained model and select topk tokenizer logits and retokenize with std_tokenizer,
-            then compact new token phrases and probabilities
-            into 1-D tensor [ >= batch_size * (2 * topk + 1)] prob + at least 1 token per phrase + floor_prob.
-            The floor probability is the mean probability of token phrases not captured in topk, required since
-            the server tokenizer vocab_size may not be known to the receiver/validator.
 
-                Args:
-                    token_batch ( :obj:`torch.LongTensor`, `required`):
-                        torch inputs to be forward processed, [batch_size, std_sequence_len].
-                    std_tokenizer ( :obj:`PreTrainedTokenizerBase`, `optional`):
-                        The standard tokenizer which was used to tokenize the inputs.
-                    topk ( :obj:`int`, `optional`):
-                        Amount of std_tokenized server phrases with highest probability to produce.
-                    model_output (:obj:`transformers.modeling_outputs.BaseModelOutputWithCrossAttentions`, `optional`):
-                        The output of transformers AutoModel.
+        tokens = self.token_remap(token_batch, std_tokenizer)
 
-                Returns:
-                    model_outputs (:obj:`transformers.modeling_outputs.BaseModelOutputWithCrossAttentions`, `required`):
-                        The output of transformers AutoModel.
-                    topk_tensor (:obj:`torch.Tensor`, `required`):
-                        [batch_size, (topk + 1), max_len] tensor includes topk token probabilities (prob_k) + floor_prob
-                        in first column with gradients attached, with std_tokens in remaining columns with ignore_index padding.
-                        Content structure:
-                        [[[prob_k=0_b=0, tok_0_k=0_b=0, tok_1_k=0_b=0, ..., ignore_index?],
-                        [prob_k=1_b=0, tok_0_k=1_b=0, tok_1_k=1_b=0, ..., ignore_index?],
-                        [...],
-                        [prob_floor_b=0, ignore_index, ..., ignore_index]],
-                        [[prob_k=0_b=1, tok_0_k=0_b=1, tok_1_k=0_b=1, ..., ignore_index?],
-                        [prob_k=1_b=1, tok_0_k=1_b=1, tok_1_k=1_b=1, ..., ignore_index?],
-                        [...],
-                        [prob_floor_b=1, ignore_index, ..., ignore_index]],
-                        [...]]
-            """
-            tokens = self.token_remap(token_batch, std_tokenizer)
+        def _forward(_model_output=model_output):
+            if _model_output is None:
+                _model_output = self.pre_model(input_ids=tokens['input_ids'],
+                                               attention_mask=tokens['attention_mask'],
+                                               output_hidden_states=True)
 
-            def _forward(_model_output=model_output):
-                if _model_output is None:
-                    _model_output = self.pre_model(input_ids=tokens['input_ids'],
-                                                attention_mask=tokens['attention_mask'],
-                                                output_hidden_states=True)
+            # model_output.logits: [batch_size, sequence_len, server_vocab_size]
+            last_logits = _model_output.logits[:, -1, :]  # [batch_size] server prediction of continuation, right-aligned
 
-                # model_output.logits: [batch_size, sequence_len, server_vocab_size]
-                last_logits = _model_output.logits[:, -1, :]  # [batch_size] server prediction of continuation, right-aligned
+            # Select topk tokenizer logits and retokenize with std_tokenizer,
+            # then compact new token phrases and probabilities into 1-D tensor
+            topk_tensor = topk_token_phrases(last_logits, self.tokenizer, topk=topk)  # [batch_size, (topk + 1), max_len]
 
-                # Select topk tokenizer logits and retokenize with std_tokenizer,
-                # then compact new token phrases and probabilities into 1-D tensor
-                topk_tensor = topk_token_phrases(last_logits, self.tokenizer, topk=topk)  # [batch_size, (topk + 1), max_len]
+            original_loss = self.get_loss_fct(_model_output.logits, tokens['input_ids']).item()
+            message = f'Loss: {original_loss:.2f}'
 
-                original_loss = self.get_loss_fct(_model_output.logits, tokens['input_ids']).item()
-                message = f'Loss: {original_loss:.2f}'
+            _model_output.loss = original_loss
+            return message, _model_output, topk_tensor
 
-                _model_output.loss = original_loss
-                return message, _model_output, topk_tensor
+        if self.config.neuron.remote_train:
+            return _forward()  # track gradients for training
 
-            if self.config.neuron.remote_train:
-                return _forward()  # track gradients for training
-
-            with torch.no_grad():
-                return _forward()  # no gradients
-
-        with profile(activities=[ProfilerActivity.CUDA], profile_memory=True, record_shapes=True) as prof:
-            output = profilefn()
-        print(prof.key_averages().table(sort_by="self_cuda_memory_usage", row_limit=20))
-        return output
+        with torch.no_grad():
+            return _forward()  # no gradients
 
     def get_loss_fct(self, logits: torch.FloatTensor, labels: torch.LongTensor) -> torch.FloatTensor:
         """
