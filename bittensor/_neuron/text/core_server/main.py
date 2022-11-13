@@ -27,7 +27,7 @@ if __name__ == "__main__":
     ctx = mp.get_context("spawn")
     queue = ctx.Queue()
 
-    instances_count = 6
+    instances_count = config.create_instances
     instances = []
     for i in range(instances_count):
         queue.put(pretrained_model)
@@ -35,7 +35,7 @@ if __name__ == "__main__":
         hotkey = 'hw' + str(i + 1)
         config.wallet.hotkey = hotkey
         config.name = hotkey
-        config.axon.port = 10733 + i
+        config.axon.port = config.axon.port + i
 
         print(config.name, config.axon.port, config.wallet.hotkey)
 
