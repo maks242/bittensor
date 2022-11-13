@@ -2,12 +2,18 @@ import bittensor
 import torch.multiprocessing as mp
 import torch
 
-
 import transformers
 from transformers import AutoModel,AutoTokenizer,AutoConfig, AutoModelForCausalLM
 
+def load_pretrained_model(config):
+    pretrained_model = AutoModelForCausalLM.from_pretrained(config.neuron.model_name)
+    if config.neuron.autocast and config.neuron.device[:4] == 'cuda':
+        pretrained_model.half()
+
+    return pretrained_model.to(config.neuron.device)
+
+
 def processfn(queue, config):
-    tl = torch.randn(1024*1024*1, device='cuda:0')
     bittensor.neurons.core_server.neuron(queue=queue, config=config).run()
 
 if __name__ == "__main__":
@@ -16,8 +22,7 @@ if __name__ == "__main__":
     bittensor.utils.version_checking()
     
     config = bittensor.neurons.core_server.server.config()
-    pretrained_model = AutoModelForCausalLM.from_pretrained(config.neuron.model_name)
-    pretrained_model = pretrained_model.to(config.neuron.device)
+    pretrained_model = load_pretrained_model(config=config)
 
     ctx = mp.get_context("spawn")
     queue = ctx.Queue()
