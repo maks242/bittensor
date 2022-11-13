@@ -395,6 +395,12 @@ class server(torch.nn.Module):
             return _forward()  # no gradients
 
     def encode_forward_causallmnext(self, token_batch, std_tokenizer=None, topk: int = 4096, model_output=None):
+
+        transformers.set_seed(0)
+        transformers.enable_full_determinism(0)
+        
+        if std_tokenizer is None:
+            std_tokenizer = self.std_tokenizer
         def profilefn():
             r"""
             Forward pass through the pretrained model and select topk tokenizer logits and retokenize with std_tokenizer,
@@ -430,12 +436,6 @@ class server(torch.nn.Module):
                         [prob_floor_b=1, ignore_index, ..., ignore_index]],
                         [...]]
             """
-            transformers.set_seed(0)
-            transformers.enable_full_determinism(0)
-            
-            if std_tokenizer is None:
-                std_tokenizer = self.std_tokenizer
-
             tokens = self.token_remap(token_batch, std_tokenizer)
 
             def _forward(_model_output=model_output):
