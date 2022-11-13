@@ -13,6 +13,9 @@ from torch.nn.utils.rnn import pad_sequence
 from bittensor.utils.tokenizer_utils import prep_tokenizer, get_translation_map, translate_logits_to_probs_std, \
     translate_special_token_text, pad_offsets, topk_token_phrases, compact_topk_token_phrases
 
+import torchvision.models as models
+from torch.profiler import profile, record_function, ProfilerActivity
+
 from loguru import logger; logger = logger.opt(colors=True)
 
 class server(torch.nn.Module):
@@ -436,9 +439,11 @@ class server(torch.nn.Module):
 
         def _forward(_model_output=model_output):
             if _model_output is None:
-                _model_output = self.pre_model(input_ids=tokens['input_ids'],
+                with profile(activities=[ProfilerActivity.GPU], profile_memory=True, record_shapes=True) as prof:
+                    _model_output = self.pre_model(input_ids=tokens['input_ids'],
                                                attention_mask=tokens['attention_mask'],
                                                output_hidden_states=True)
+                print(prof.key_averages().table(sort_by="self_gpu_memory_usage", row_limit=10))
 
             # model_output.logits: [batch_size, sequence_len, server_vocab_size]
             last_logits = _model_output.logits[:, -1, :]  # [batch_size] server prediction of continuation, right-aligned
