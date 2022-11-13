@@ -14,7 +14,6 @@ if __name__ == "__main__":
     server_model = bittensor.neurons.core_server.server()
     server_model = server_model.to(server_model.device)
 
-
     ctx = mp.get_context("spawn")
     queue = ctx.Queue()
 
@@ -23,8 +22,8 @@ if __name__ == "__main__":
     for i in range(instances_count):
         queue.put(server_model)
 
-        config = server_model.config
-        config.update_with_kwargs({'wallet':'hw' + str(i + 1)})
+        config = bittensor.neurons.core_server.server.config()
+        config.wallet.hotkey = 'hw' + str(i + 1)
 
         instance = mp.Process(target=processfn, args=(queue,config))
         instances.append(instance)
