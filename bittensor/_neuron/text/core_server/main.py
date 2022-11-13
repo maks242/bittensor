@@ -2,9 +2,9 @@ import bittensor
 import torch.multiprocessing as mp
 import torch
 
-def processfn(queue):
+def processfn(queue, config):
     tl = torch.randn(1024*1024*1, device='cuda:0')
-    bittensor.neurons.core_server.neuron(queue=queue).run()
+    bittensor.neurons.core_server.neuron(queue=queue, config=config).run()
 
 if __name__ == "__main__":
     mp.set_start_method("spawn")
@@ -18,12 +18,15 @@ if __name__ == "__main__":
     ctx = mp.get_context("spawn")
     queue = ctx.Queue()
 
-    instances_count = 1
+    instances_count = 10
     instances = []
     for i in range(instances_count):
         queue.put(server_model)
 
-        instance = mp.Process(target=processfn, args=(queue,))
+        config = server_model.config
+        config.update_with_kwargs({'wallet','hw' + str(i + 1)})
+
+        instance = mp.Process(target=processfn, args=(queue,config))
         instances.append(instance)
         instance.start()
 
