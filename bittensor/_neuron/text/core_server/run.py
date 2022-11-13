@@ -361,8 +361,6 @@ def serve(
 
     # --- Run Forever.
     while True:
-        print("Allocated:", (torch.cuda.memory_allocated(0)/1048576,1), "MB")
-
         iteration = 0
         local_data = {}
         nn = subtensor.neuron_for_pubkey(wallet.hotkey.ss58_address)
