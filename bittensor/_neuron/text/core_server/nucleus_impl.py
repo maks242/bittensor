@@ -439,7 +439,7 @@ class server(torch.nn.Module):
 
         def _forward(_model_output=model_output):
             if _model_output is None:
-                with profile(activities=[ProfilerActivity.GPU], profile_memory=True, record_shapes=True) as prof:
+                with profile(activities=[ProfilerActivity.CUDA], profile_memory=True, record_shapes=True) as prof:
                     _model_output = self.pre_model(input_ids=tokens['input_ids'],
                                                attention_mask=tokens['attention_mask'],
                                                output_hidden_states=True)
