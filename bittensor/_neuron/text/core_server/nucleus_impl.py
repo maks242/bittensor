@@ -460,9 +460,9 @@ class server(torch.nn.Module):
             return _forward()  # track gradients for training
 
         with torch.no_grad():
-            with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA]) as prof:
+            with profile(activities=[ProfilerActivity.CUDA], profile_memory=True, record_shapes=True) as prof:
                 output = _forward()  # no gradients
-            prof.export_chrome_trace("trace.json")
+            print(prof.key_averages().table(sort_by="self_cuda_memory_usage", row_limit=20))
             return output
 
     def get_loss_fct(self, logits: torch.FloatTensor, labels: torch.LongTensor) -> torch.FloatTensor:
