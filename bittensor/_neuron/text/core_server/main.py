@@ -22,6 +22,8 @@ if __name__ == "__main__":
     bittensor.utils.version_checking()
     
     config = bittensor.neurons.core_server.server.config()
+    wallet_hotkey = config.wallet.hotkey
+    axon_port = config.axon.work
     pretrained_model = load_pretrained_model(config=config)
 
     ctx = mp.get_context("spawn")
@@ -32,10 +34,8 @@ if __name__ == "__main__":
     for i in range(instances_count):
         queue.put(pretrained_model)
 
-        hotkey = 'hw' + str(i + 1)
-        config.wallet.hotkey = hotkey
-        config.name = hotkey
-        config.axon.port = config.axon.port + 1
+        config.wallet.hotkey = wallet_hotkey + str(i + 1)
+        config.axon.port = axon_port + i
 
         print(config.name, config.axon.port, config.wallet.hotkey)
 
