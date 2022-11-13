@@ -24,7 +24,7 @@ if __name__ == "__main__":
         queue.put(server_model)
 
         config = server_model.config
-        config.update_with_kwargs({'wallet','hw' + str(i + 1)})
+        config.update_with_kwargs({'wallet':'hw' + str(i + 1)})
 
         instance = mp.Process(target=processfn, args=(queue,config))
         instances.append(instance)
