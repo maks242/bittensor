@@ -149,10 +149,13 @@ def serve(
 
     def forward_casual_lm_next(inputs_x: torch.FloatTensor, synapse, model_output=None):
         
-        time.sleep("Sleep for 10 secs")
+        print("Sleep for 10 secs")
+        time.sleep(5)
         inputs_y = inputs_x.to(model.device)
+        inputs_y = inputs_y + 1
         print(inputs_y)
-        time.sleep("Sleep for 15 secs")
+        time.sleep(5)
+        print("Sleep for 15 secs")
         
         with mutex:
             message, model_output, topk_token_phrases = model.encode_forward_causallmnext(inputs_x.to(model.device),
