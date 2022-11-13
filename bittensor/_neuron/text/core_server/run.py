@@ -151,7 +151,6 @@ def serve(
         
         time.sleep("Sleep for 10 secs")
         inputs_y = inputs_x.to(model.device)
-        inputs_y = inputs_y + 1
         print(inputs_y)
         time.sleep("Sleep for 15 secs")
         
