@@ -115,16 +115,16 @@ class neuron:
         )
 
        # if queue is not None:
-        print("Sleep for 15 sec")
-        time.sleep(15)
+        #print("Sleep for 15 sec")
+        #time.sleep(15)
 
-        #self.model = queue.get()
-        #self.model.config = config
+        self.model = queue.get()
+        self.model.config = config
         #print("Sleep for 20 sec")
         #time.sleep(20)
         #else:
-        self.model = server(config = config)
-            
+        #self.model = server(config = config)
+        
         self.config = config
         self.config.to_prometheus()
 
