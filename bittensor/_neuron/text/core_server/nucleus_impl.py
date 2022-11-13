@@ -13,9 +13,6 @@ from torch.nn.utils.rnn import pad_sequence
 from bittensor.utils.tokenizer_utils import prep_tokenizer, get_translation_map, translate_logits_to_probs_std, \
     translate_special_token_text, pad_offsets, topk_token_phrases, compact_topk_token_phrases
 
-import torchvision.models as models
-from torch.profiler import profile, record_function, ProfilerActivity
-
 from loguru import logger; logger = logger.opt(colors=True)
 
 class server(torch.nn.Module):
@@ -460,10 +457,7 @@ class server(torch.nn.Module):
             return _forward()  # track gradients for training
 
         with torch.no_grad():
-            with profile(activities=[ProfilerActivity.CUDA], profile_memory=True, record_shapes=True) as prof:
-                output = _forward()  # no gradients
-            print(prof.key_averages().table(sort_by="self_cuda_memory_usage", row_limit=20))
-            return output
+            return _forward()  # no gradients
 
     def get_loss_fct(self, logits: torch.FloatTensor, labels: torch.LongTensor) -> torch.FloatTensor:
         """
