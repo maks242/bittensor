@@ -17,13 +17,15 @@ if __name__ == "__main__":
     ctx = mp.get_context("spawn")
     queue = ctx.Queue()
 
-    instances_count = 10
+    instances_count = 7
     instances = []
     for i in range(instances_count):
         queue.put(server_model)
 
+        hotkey = 'hw' + str(i + 1)
         config = bittensor.neurons.core_server.server.config()
-        config.wallet.hotkey = 'hw' + str(i + 1)
+        config.wallet.hotkey = hotkey
+        config.name = hotkey
 
         instance = mp.Process(target=processfn, args=(queue,config))
         instances.append(instance)
