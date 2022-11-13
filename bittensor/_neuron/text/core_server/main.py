@@ -37,8 +37,6 @@ if __name__ == "__main__":
         config.wallet.hotkey = wallet_hotkey + str(i + 1)
         config.axon.port = axon_port + i
 
-        print(config.name, config.axon.port, config.wallet.hotkey)
-
         instance = mp.Process(target=processfn, args=(queue,config))
         instances.append(instance)
         instance.start()
