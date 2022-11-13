@@ -23,7 +23,7 @@ if __name__ == "__main__":
     
     config = bittensor.neurons.core_server.server.config()
     wallet_hotkey = config.wallet.hotkey
-    axon_port = config.axon.work
+    axon_port = config.axon.port
     pretrained_model = load_pretrained_model(config=config)
 
     ctx = mp.get_context("spawn")
