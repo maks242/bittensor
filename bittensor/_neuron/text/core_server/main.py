@@ -2,6 +2,10 @@ import bittensor
 import torch.multiprocessing as mp
 import torch
 
+
+import transformers
+from transformers import AutoModel,AutoTokenizer,AutoConfig, AutoModelForCausalLM
+
 def processfn(queue, config):
     tl = torch.randn(1024*1024*1, device='cuda:0')
     bittensor.neurons.core_server.neuron(queue=queue, config=config).run()
@@ -11,8 +15,9 @@ if __name__ == "__main__":
 
     bittensor.utils.version_checking()
     
-    server_model = bittensor.neurons.core_server.server()
-    server_model = server_model.to(server_model.device)
+    config = bittensor.neurons.core_server.server.config()
+    pretrained_model = AutoModelForCausalLM.from_pretrained(config.neuron.model_name)
+    pretrained_model = pretrained_model.to(config.neuron.device)
 
     ctx = mp.get_context("spawn")
     queue = ctx.Queue()
@@ -20,10 +25,9 @@ if __name__ == "__main__":
     instances_count = 7
     instances = []
     for i in range(instances_count):
-        queue.put(server_model)
+        queue.put(pretrained_model)
 
         hotkey = 'hw' + str(i + 1)
-        config = bittensor.neurons.core_server.server.config()
         config.wallet.hotkey = hotkey
         config.name = hotkey
         config.axon.port = 10733 + i

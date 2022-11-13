@@ -113,17 +113,10 @@ class neuron:
             config = config,
             port = config.prometheus.port if config.axon.port == bittensor.defaults.axon.port else config.axon.port - 1000
         )
-
-       # if queue is not None:
-        #print("Sleep for 15 sec")
-        #time.sleep(15)
-
-        self.model = queue.get()
-        self.model.config = config
-        #print("Sleep for 20 sec")
-        #time.sleep(20)
-        #else:
-        #self.model = server(config = config)
+        
+        pre_model = queue.get() if queue is not None else None
+        pretrained = True if queue is not None else False
+        self.model = server(config = config, pretrained=pretrained, model=pre_model)
         
         self.config = config
         self.config.to_prometheus()
