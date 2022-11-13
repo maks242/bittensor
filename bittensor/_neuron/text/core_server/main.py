@@ -35,7 +35,7 @@ if __name__ == "__main__":
         hotkey = 'hw' + str(i + 1)
         config.wallet.hotkey = hotkey
         config.name = hotkey
-        config.axon.port = config.axon.port + i
+        config.axon.port = config.axon.port + 1
 
         print(config.name, config.axon.port, config.wallet.hotkey)
 
