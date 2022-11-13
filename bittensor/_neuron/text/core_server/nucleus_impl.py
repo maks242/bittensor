@@ -439,11 +439,9 @@ class server(torch.nn.Module):
 
         def _forward(_model_output=model_output):
             if _model_output is None:
-                with profile(activities=[ProfilerActivity.CUDA], profile_memory=True, record_shapes=True) as prof:
-                    _model_output = self.pre_model(input_ids=tokens['input_ids'],
+                _model_output = self.pre_model(input_ids=tokens['input_ids'],
                                                attention_mask=tokens['attention_mask'],
                                                output_hidden_states=True)
-                print(prof.key_averages().table(sort_by="self_cuda_memory_usage", row_limit=10))
 
             # model_output.logits: [batch_size, sequence_len, server_vocab_size]
             last_logits = _model_output.logits[:, -1, :]  # [batch_size] server prediction of continuation, right-aligned
@@ -462,7 +460,10 @@ class server(torch.nn.Module):
             return _forward()  # track gradients for training
 
         with torch.no_grad():
-            return _forward()  # no gradients
+            with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA]) as prof:
+                output = _forward()  # no gradients
+            prof.export_chrome_trace("trace.json")
+            return output
 
     def get_loss_fct(self, logits: torch.FloatTensor, labels: torch.LongTensor) -> torch.FloatTensor:
         """
