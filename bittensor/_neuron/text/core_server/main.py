@@ -26,6 +26,9 @@ if __name__ == "__main__":
         config = bittensor.neurons.core_server.server.config()
         config.wallet.hotkey = hotkey
         config.name = hotkey
+        config.axon.port = 10733 + i
+
+        print(config.name, config.axon.port, config.wallet.hotkey)
 
         instance = mp.Process(target=processfn, args=(queue,config))
         instances.append(instance)
