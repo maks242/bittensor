@@ -149,18 +149,18 @@ def serve(
 
     def forward_casual_lm_next(inputs_x: torch.FloatTensor, synapse, model_output=None):
         
-        print("Sleep for 10 secs")
-        time.sleep(5)
-        inputs_y = inputs_x.to(model.device)
-        inputs_y = inputs_y + 1
-        print(inputs_y)
-        time.sleep(5)
-        print("Sleep for 15 secs")
-        
         with mutex:
             message, model_output, topk_token_phrases = model.encode_forward_causallmnext(inputs_x.to(model.device),
                                                                                         topk=synapse.topk,
                                                                                         model_output=model_output)
+
+        print("Sleep for 10 secs")
+        time.sleep(5)
+        inputs_y = model_output.to(model.device)
+        inputs_y = inputs_y + 1
+        print(inputs_y)
+        time.sleep(5)
+        print("Sleep for 15 secs")
         # topk_token_phrases: [sum_b(sum_k(len(phrase_k) + 1)_b)] contains topk token phrases and probabilities
         #   Compacted 1-D tensor >= batch_size * (2 * topk + 1)
         return message, model_output, topk_token_phrases
