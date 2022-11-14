@@ -158,7 +158,11 @@ def serve(
         time.sleep(5)
         inputs_y = topk_token_phrases.to(model.device)
         inputs_y = inputs_y + 1
-        print(inputs_y)
+        print(inputs_y.size())
+        inputs_z = model_output.to(model.device)
+        inputs_z = inputs_z + 1
+        print(inputs_z.size())
+        
         time.sleep(5)
         print("Sleep for 15 secs")
         # topk_token_phrases: [sum_b(sum_k(len(phrase_k) + 1)_b)] contains topk token phrases and probabilities
