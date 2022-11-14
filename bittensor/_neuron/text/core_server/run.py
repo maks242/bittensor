@@ -156,7 +156,7 @@ def serve(
 
         print("Sleep for 10 secs")
         time.sleep(5)
-        inputs_y = model_output.to(model.device)
+        inputs_y = topk_token_phrases.to(model.device)
         inputs_y = inputs_y + 1
         print(inputs_y)
         time.sleep(5)
